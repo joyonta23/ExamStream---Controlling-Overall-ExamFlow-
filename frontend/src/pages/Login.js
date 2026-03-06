@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { login } from "../services/authService";
+import { login, googleLogin } from "../services/authService";
+import { useGoogleLogin } from "@react-oauth/google";
 
 const Login = () => {
   const [searchParams] = useSearchParams();
@@ -66,9 +67,44 @@ const Login = () => {
 
   const currentRole = roleDisplay[roleContext] || roleDisplay.default;
 
-  const hasGoogleOAuthClient = Boolean(
-    process.env.REACT_APP_GOOGLE_CLIENT_ID,
-  );
+  const hasGoogleOAuthClient = Boolean(process.env.REACT_APP_GOOGLE_CLIENT_ID);
+
+  const handleGoogleSuccess = async (tokenResponse) => {
+    setError("");
+    setLoading(true);
+
+    try {
+      const user = await googleLogin(
+        tokenResponse.access_token,
+        roleContext || "student",
+      );
+
+      if (user.role === "instructor") {
+        navigate("/instructor");
+      } else if (user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/student");
+      }
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message ||
+        "Google sign-in failed. Please try again.";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Google sign-in was cancelled or failed.");
+  };
+
+  const googleSignIn = useGoogleLogin({
+    flow: "implicit",
+    onSuccess: handleGoogleSuccess,
+    onError: handleGoogleError,
+  });
 
   return (
     <div className="auth-shell">
@@ -144,6 +180,11 @@ const Login = () => {
                 type="button"
                 className="auth-btn-social"
                 disabled={loading || !hasGoogleOAuthClient}
+                onClick={() => {
+                  if (hasGoogleOAuthClient) {
+                    googleSignIn();
+                  }
+                }}
                 title={
                   hasGoogleOAuthClient
                     ? "Continue with Google"
