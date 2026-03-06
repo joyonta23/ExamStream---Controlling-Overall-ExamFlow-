@@ -1,0 +1,152 @@
+.trend-dashboard-shell {
+  position: relative;
+  min-height: 100vh;
+  padding: 110px 24px 28px;
+  background: hsl(0, 0%, 7%);
+  overflow: hidden;
+}
+
+.trend-dashboard-grid-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.22;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    radial-gradient(
+      circle at 50% 30%,
+      rgba(71, 255, 179, 0.22),
+      transparent 58%
+    );
+  background-size:
+    110px 110px,
+    110px 110px,
+    100% 100%;
+  z-index: 0;
+}
+
+.trend-dashboard-panel {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(16, 20, 24, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+}
+
+.trend-dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.trend-dashboard-title {
+  margin: 0;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.trend-cta-btn {
+  white-space: nowrap;
+}
+
+.trend-empty-state {
+  text-align: center;
+  color: #b8c0cc;
+  padding: 56px 10px;
+}
+
+.trend-empty-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  color: #fff;
+}
+
+.trend-dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
+}
+
+.trend-exam-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 18px;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.trend-exam-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(71, 255, 179, 0.45);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.trend-exam-title {
+  margin: 0 0 8px;
+  color: #fff;
+}
+
+.trend-exam-desc {
+  margin: 0 0 14px;
+  color: #b8c0cc;
+}
+
+.trend-exam-meta {
+  margin-top: 12px;
+  color: #b8c0cc;
+  font-size: 14px;
+}
+
+.trend-exam-meta p {
+  margin: 4px 0;
+}
+
+.trend-exam-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.trend-exam-actions .btn {
+  flex: 1;
+}
+
+.trend-exam-card .status-badge {
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .trend-dashboard-shell {
+    padding: 98px 12px 16px;
+  }
+
+  .trend-dashboard-panel {
+    padding: 16px;
+  }
+
+  .trend-dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .trend-cta-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .trend-dashboard-cards {
+    grid-template-columns: 1fr;
+  }
+}

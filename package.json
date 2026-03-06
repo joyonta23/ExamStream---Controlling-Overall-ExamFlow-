@@ -1,0 +1,22 @@
+{
+  "name": "examstream",
+  "version": "1.0.0",
+  "description": "Online Exam Platform with Timer and File Upload",
+  "main": "index.js",
+  "scripts": {
+    "server": "cd backend && npm run dev",
+    "client": "cd frontend && npm start",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "exam",
+    "mern",
+    "upload"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
