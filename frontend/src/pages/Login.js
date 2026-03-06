@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { login, googleLogin } from "../services/authService";
-import { useGoogleLogin } from "@react-oauth/google";
+import { login } from "../services/authService";
 
 const Login = () => {
   const [searchParams] = useSearchParams();
@@ -67,43 +66,9 @@ const Login = () => {
 
   const currentRole = roleDisplay[roleContext] || roleDisplay.default;
 
-  const handleGoogleSuccess = async (tokenResponse) => {
-    setError("");
-    setLoading(true);
-
-    try {
-      const user = await googleLogin(
-        tokenResponse.access_token,
-        roleContext || "student",
-      );
-
-      if (user.role === "instructor") {
-        navigate("/instructor");
-      } else if (user.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/student");
-      }
-    } catch (err) {
-      console.error("Google login error:", err);
-      const errorMessage =
-        err.response?.data?.message ||
-        "Google sign-in failed. Please try again.";
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleError = () => {
-    setError("Google sign-in was cancelled or failed.");
-  };
-
-  const googleSignIn = useGoogleLogin({
-    flow: "implicit",
-    onSuccess: handleGoogleSuccess,
-    onError: handleGoogleError,
-  });
+  const hasGoogleOAuthClient = Boolean(
+    process.env.REACT_APP_GOOGLE_CLIENT_ID,
+  );
 
   return (
     <div className="auth-shell">
@@ -178,8 +143,12 @@ const Login = () => {
               <button
                 type="button"
                 className="auth-btn-social"
-                onClick={() => googleSignIn()}
-                disabled={loading}
+                disabled={loading || !hasGoogleOAuthClient}
+                title={
+                  hasGoogleOAuthClient
+                    ? "Continue with Google"
+                    : "Google sign-in is not configured"
+                }
               >
                 <svg
                   width="18"
@@ -205,7 +174,7 @@ const Login = () => {
                     fill="#EA4335"
                   />
                 </svg>
-                Google
+                {hasGoogleOAuthClient ? "Google" : "Google (Unavailable)"}
               </button>
             </div>
 

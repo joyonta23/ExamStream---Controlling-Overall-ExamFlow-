@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { register, googleLogin } from "../services/authService";
-import { useGoogleLogin } from "@react-oauth/google";
+import { register } from "../services/authService";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -58,37 +57,9 @@ const Register = () => {
     }
   };
 
-  const handleGoogleSuccess = async (tokenResponse) => {
-    setError("");
-    setLoading(true);
-
-    try {
-      const user = await googleLogin(tokenResponse.access_token, formData.role);
-
-      if (user.role === "instructor") {
-        navigate("/instructor");
-      } else {
-        navigate("/student");
-      }
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Google sign-up failed. Please try again.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleError = () => {
-    setError("Google sign-up was cancelled or failed.");
-  };
-
-  const googleSignIn = useGoogleLogin({
-    flow: "implicit",
-    onSuccess: handleGoogleSuccess,
-    onError: handleGoogleError,
-  });
+  const hasGoogleOAuthClient = Boolean(
+    process.env.REACT_APP_GOOGLE_CLIENT_ID,
+  );
 
   return (
     <div className="auth-shell">
@@ -214,8 +185,12 @@ const Register = () => {
               <button
                 type="button"
                 className="auth-btn-social"
-                onClick={() => googleSignIn()}
-                disabled={loading}
+                disabled={loading || !hasGoogleOAuthClient}
+                title={
+                  hasGoogleOAuthClient
+                    ? "Continue with Google"
+                    : "Google sign-up is not configured"
+                }
               >
                 <svg
                   width="18"
@@ -241,7 +216,7 @@ const Register = () => {
                     fill="#EA4335"
                   />
                 </svg>
-                Google
+                {hasGoogleOAuthClient ? "Google" : "Google (Unavailable)"}
               </button>
             </div>
 
