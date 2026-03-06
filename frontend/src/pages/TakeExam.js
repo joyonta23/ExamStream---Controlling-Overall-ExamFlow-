@@ -25,6 +25,7 @@ const TakeExam = () => {
     fetchExamData();
     const interval = setInterval(fetchExamStatus, 10000); // Update status every 10 seconds
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchExamData = async () => {
