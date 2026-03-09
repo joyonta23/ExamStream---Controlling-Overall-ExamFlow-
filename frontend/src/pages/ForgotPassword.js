@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
+  const [requestedEmail, setRequestedEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -27,7 +28,12 @@ const ForgotPassword = () => {
 
       if (!response.ok) {
         setError(data.message || "Failed to process request");
+      } else if (data.emailSent === false) {
+        setError(
+          "We could not send the reset email right now. Please try again in a minute.",
+        );
       } else {
+        setRequestedEmail(email);
         setSubmitted(true);
         setEmail("");
       }
@@ -169,7 +175,8 @@ const ForgotPassword = () => {
               Check Your Email
             </h3>
             <p style={{ color: "#666", marginBottom: "15px" }}>
-              We've sent a password reset link to <strong>{email}</strong>
+              We've sent a password reset link to{" "}
+              <strong>{requestedEmail}</strong>
             </p>
             <p
               style={{ color: "#999", fontSize: "14px", marginBottom: "20px" }}
