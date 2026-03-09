@@ -2,12 +2,14 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
 const {
   sendSignupConfirmation,
   sendApprovalEmail,
   sendRejectionEmail,
+  sendPasswordResetEmail,
 } = require("../services/emailService");
 
 // Generate JWT token
@@ -341,5 +343,168 @@ router.get("/all-users", protect, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+// @route   POST /api/auth/forgot-password
+// @desc    Request password reset email
+// @access  Public
+router.post(
+  "/forgot-password",
+  [body("email").isEmail().withMessage("Please enter a valid email")],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const { email } = req.body;
+      const user = await User.findOne({ email });
+
+      // Don't reveal if email exists (security best practice)
+      if (!user) {
+        return res.status(200).json({
+          message:
+            "If an account exists with this email, a password reset link has been sent.",
+        });
+      }
+
+      // Generate reset token (32 bytes = 256 bits, hex encoded = 64 characters)
+      const resetToken = crypto.randomBytes(32).toString("hex");
+
+      // Hash token for storage (use SHA-256)
+      const hashedToken = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+      // Set reset token and expiry (10 minutes)
+      user.resetToken = hashedToken;
+      user.resetTokenExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      await user.save();
+
+      // Create reset link (unhashed token goes in URL)
+      const resetLink = `${process.env.FRONTEND_URL || "https://exam-stream-controlling-overall-exa.vercel.app"}/reset-password?token=${resetToken}`;
+
+      // Send email
+      const emailSent = await sendPasswordResetEmail(
+        user.email,
+        user.name,
+        resetLink,
+      );
+
+      res.status(200).json({
+        message:
+          "If an account exists with this email, a password reset link has been sent.",
+        emailSent,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Server error" });
+    }
+  },
+);
+
+// @route   POST /api/auth/validate-reset-token
+// @desc    Validate if reset token is still valid
+// @access  Public
+router.post(
+  "/validate-reset-token",
+  [body("token").notEmpty().withMessage("Reset token is required")],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const { token } = req.body;
+
+      // Hash the token to compare with database
+      const hashedToken = crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
+
+      const user = await User.findOne({
+        resetToken: hashedToken,
+        resetTokenExpiry: { $gt: new Date() }, // Token not expired
+      });
+
+      if (!user) {
+        return res.status(400).json({
+          message: "Invalid or expired reset token",
+          valid: false,
+        });
+      }
+
+      res.status(200).json({
+        message: "Token is valid",
+        valid: true,
+        email: user.email, // Return email for display purposes
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Server error" });
+    }
+  },
+);
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset password with valid token
+// @access  Public
+router.post(
+  "/reset-password",
+  [
+    body("token").notEmpty().withMessage("Reset token is required"),
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const { token, password } = req.body;
+
+      // Hash the token to compare with database
+      const hashedToken = crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
+
+      const user = await User.findOne({
+        resetToken: hashedToken,
+        resetTokenExpiry: { $gt: new Date() }, // Token not expired
+      });
+
+      if (!user) {
+        return res.status(400).json({
+          message: "Invalid or expired reset token",
+        });
+      }
+
+      // Hash new password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      // Update password and clear reset token
+      user.password = hashedPassword;
+      user.resetToken = null;
+      user.resetTokenExpiry = null;
+      await user.save();
+
+      res.status(200).json({
+        message:
+          "Password has been reset successfully. You can now log in with your new password.",
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Server error" });
+    }
+  },
+);
 
 module.exports = router;

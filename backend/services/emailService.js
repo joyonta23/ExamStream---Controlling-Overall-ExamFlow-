@@ -124,8 +124,58 @@ const sendRejectionEmail = async (userEmail, userName) => {
   }
 };
 
+// Send password reset email
+const sendPasswordResetEmail = async (userEmail, userName, resetLink) => {
+  try {
+    const mailOptions = {
+      from: getFromAddress(),
+      to: userEmail,
+      subject: "ExamStream - Password Reset Request",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #667eea;">Password Reset Request</h2>
+          <p>Hello ${userName},</p>
+          <p>We received a request to reset the password for your ExamStream account.</p>
+          <p style="color: #d9534f; font-weight: bold;">This link expires in 10 minutes.</p>
+          <p>
+            <a href="${resetLink}" style="
+              display: inline-block;
+              background-color: #667eea;
+              color: white;
+              padding: 12px 30px;
+              text-decoration: none;
+              border-radius: 5px;
+              margin: 20px 0;
+              font-weight: bold;
+            ">Reset Your Password</a>
+          </p>
+          <p style="color: #666; font-size: 13px;">
+            If you didn't request a password reset, please ignore this email. Your password will remain unchanged.
+          </p>
+          <p style="color: #666; font-size: 13px;">
+            If you're having trouble clicking the button, copy and paste this link in your browser:
+          </p>
+          <p style="color: #667eea; word-break: break-all; font-size: 12px;">
+            ${resetLink}
+          </p>
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">© 2026 ExamStream. All rights reserved.</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Password reset email sent to ${userEmail}`);
+    return true;
+  } catch (error) {
+    console.error("Error sending password reset email:", error);
+    return false;
+  }
+};
+
 module.exports = {
   sendSignupConfirmation,
   sendApprovalEmail,
   sendRejectionEmail,
+  sendPasswordResetEmail,
 };

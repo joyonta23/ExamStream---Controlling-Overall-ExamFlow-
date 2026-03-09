@@ -217,6 +217,19 @@ const Login = () => {
                   {showPassword ? "🙈" : "👁"}
                 </button>
               </div>
+              <div style={{ textAlign: "right", marginTop: "8px" }}>
+                <Link
+                  to="/forgot-password"
+                  style={{
+                    fontSize: "13px",
+                    color: "#667eea",
+                    textDecoration: "none",
+                    fontWeight: "500",
+                  }}
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             <button
