@@ -68,10 +68,7 @@ const Login = () => {
   const currentRole = roleDisplay[roleContext] || roleDisplay.default;
 
   const hasGoogleOAuthClient = Boolean(
-    (
-      process.env.REACT_APP_GOOGLE_CLIENT_ID ||
-      "297372661384-7omhitbakkms778n9ff2d0ngk4veqt9c.apps.googleusercontent.com"
-    ).trim(),
+    (process.env.REACT_APP_GOOGLE_CLIENT_ID || "").trim(),
   );
 
   const handleGoogleSuccess = async (tokenResponse) => {
