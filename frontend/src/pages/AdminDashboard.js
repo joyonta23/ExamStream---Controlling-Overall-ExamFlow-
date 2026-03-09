@@ -37,8 +37,14 @@ const AdminDashboard = () => {
       setActionLoading(userId);
       setError("");
       setSuccess("");
-      await approveUser(userId);
-      setSuccess(`Successfully approved ${userName}`);
+      const result = await approveUser(userId);
+      if (result.emailSent === false) {
+        setError(
+          `${userName} approved, but confirmation email failed to send. Please check email settings/logs.`,
+        );
+      } else {
+        setSuccess(result.message || `Successfully approved ${userName}`);
+      }
       fetchPendingUsers();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to approve user");
