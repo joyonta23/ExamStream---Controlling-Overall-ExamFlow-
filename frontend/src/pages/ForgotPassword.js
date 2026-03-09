@@ -4,7 +4,6 @@ import { useNavigate, Link } from "react-router-dom";
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const navigate = useNavigate();
@@ -13,7 +12,6 @@ const ForgotPassword = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setMessage("");
 
     try {
       const response = await fetch(
@@ -30,7 +28,6 @@ const ForgotPassword = () => {
       if (!response.ok) {
         setError(data.message || "Failed to process request");
       } else {
-        setMessage(data.message);
         setSubmitted(true);
         setEmail("");
       }
