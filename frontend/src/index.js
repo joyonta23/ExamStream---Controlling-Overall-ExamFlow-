@@ -6,7 +6,8 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 const googleClientId =
-  process.env.REACT_APP_GOOGLE_CLIENT_ID || "disabled-google-oauth";
+  process.env.REACT_APP_GOOGLE_CLIENT_ID ||
+  "297372661384-7omhitbakkms778n9ff2d0ngk4veqt9c.apps.googleusercontent.com";
 
 root.render(
   <React.StrictMode>
