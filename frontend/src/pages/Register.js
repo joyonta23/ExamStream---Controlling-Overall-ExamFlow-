@@ -6,6 +6,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 const GoogleSignUpButton = ({ loading, onSuccess, onError }) => {
   const googleSignIn = useGoogleLogin({
     flow: "implicit",
+    ux_mode: "popup",
     onSuccess,
     onError,
   });
