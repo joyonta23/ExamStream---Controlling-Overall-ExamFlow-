@@ -119,6 +119,16 @@ const Login = () => {
     ).trim(),
   );
 
+  const allowedGoogleHosts = [
+    "localhost",
+    "127.0.0.1",
+    "exam-stream-controlling-overall-exa.vercel.app",
+  ];
+  const currentHost =
+    typeof window !== "undefined" ? window.location.hostname : "";
+  const isAllowedGoogleOrigin = allowedGoogleHosts.includes(currentHost);
+  const canUseGoogleOAuth = hasGoogleOAuthClient && isAllowedGoogleOrigin;
+
   const handleGoogleSuccess = async (tokenResponse) => {
     setError("");
     setLoading(true);
@@ -220,7 +230,7 @@ const Login = () => {
             <div className="auth-divider">or continue with</div>
 
             <div className="auth-social-row">
-              {hasGoogleOAuthClient ? (
+              {canUseGoogleOAuth ? (
                 <GoogleSignInButton
                   loading={loading}
                   onSuccess={handleGoogleSuccess}
@@ -231,9 +241,15 @@ const Login = () => {
                   type="button"
                   className="auth-btn-social"
                   disabled
-                  title="Google sign-in is not configured"
+                  title={
+                    hasGoogleOAuthClient
+                      ? "Use production URL for Google sign-in"
+                      : "Google sign-in is not configured"
+                  }
                 >
-                  Google (Unavailable)
+                  {hasGoogleOAuthClient
+                    ? "Google (Open Production URL)"
+                    : "Google (Unavailable)"}
                 </button>
               )}
             </div>
