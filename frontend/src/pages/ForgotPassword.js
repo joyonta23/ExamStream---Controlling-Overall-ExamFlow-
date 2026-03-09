@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import "./Login.css";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -43,18 +42,71 @@ const ForgotPassword = () => {
     }
   };
 
+  const containerStyle = {
+    minHeight: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    padding: "20px",
+  };
+
+  const cardStyle = {
+    backgroundColor: "white",
+    padding: "40px",
+    borderRadius: "8px",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+    maxWidth: "500px",
+    width: "100%",
+  };
+
+  const inputStyle = {
+    width: "100%",
+    padding: "12px",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
+    fontSize: "16px",
+    marginTop: "8px",
+    boxSizing: "border-box",
+  };
+
+  const buttonStyle = {
+    width: "100%",
+    padding: "12px",
+    backgroundColor: "#667eea",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    marginTop: "20px",
+  };
+
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <h2>Forgot Your Password?</h2>
+    <div style={containerStyle}>
+      <div style={cardStyle}>
+        <h2 style={{ marginBottom: "10px", color: "#333" }}>
+          Forgot Your Password?
+        </h2>
         <p style={{ color: "#666", marginBottom: "30px" }}>
           No worries! We'll send you a link to reset it.
         </p>
 
         {!submitted ? (
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                htmlFor="email"
+                style={{
+                  display: "block",
+                  marginBottom: "5px",
+                  fontWeight: "500",
+                  color: "#333",
+                }}
+              >
+                Email Address
+              </label>
               <input
                 type="email"
                 id="email"
@@ -64,8 +116,9 @@ const ForgotPassword = () => {
                 required
                 disabled={loading}
                 style={{
+                  ...inputStyle,
                   backgroundColor: loading ? "#f0f0f0" : "white",
-                  cursor: loading ? "not-allowed" : "pointer",
+                  cursor: loading ? "not-allowed" : "text",
                 }}
               />
             </div>
@@ -88,6 +141,7 @@ const ForgotPassword = () => {
               type="submit"
               disabled={loading || !email}
               style={{
+                ...buttonStyle,
                 opacity: loading || !email ? 0.6 : 1,
                 cursor: loading || !email ? "not-allowed" : "pointer",
               }}

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import "./Login.css";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -100,10 +99,51 @@ const ResetPassword = () => {
     }
   };
 
+  const containerStyle = {
+    minHeight: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    padding: "20px",
+  };
+
+  const cardStyle = {
+    backgroundColor: "white",
+    padding: "40px",
+    borderRadius: "8px",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+    maxWidth: "500px",
+    width: "100%",
+  };
+
+  const inputStyle = {
+    width: "100%",
+    padding: "12px",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
+    fontSize: "16px",
+    marginTop: "8px",
+    boxSizing: "border-box",
+  };
+
+  const buttonStyle = {
+    width: "100%",
+    padding: "12px",
+    backgroundColor: "#667eea",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    marginTop: "20px",
+  };
+
   if (validating) {
     return (
-      <div className="login-container">
-        <div className="login-card">
+      <div style={containerStyle}>
+        <div style={cardStyle}>
           <div style={{ textAlign: "center", padding: "40px 20px" }}>
             <div
               style={{
@@ -130,8 +170,8 @@ const ResetPassword = () => {
 
   if (error && !tokenValid) {
     return (
-      <div className="login-container">
-        <div className="login-card">
+      <div style={containerStyle}>
+        <div style={cardStyle}>
           <div
             style={{
               textAlign: "center",
@@ -169,8 +209,8 @@ const ResetPassword = () => {
 
   if (resetSuccess) {
     return (
-      <div className="login-container">
-        <div className="login-card">
+      <div style={containerStyle}>
+        <div style={cardStyle}>
           <div
             style={{
               textAlign: "center",
@@ -217,16 +257,28 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <h2>Reset Your Password</h2>
+    <div style={containerStyle}>
+      <div style={cardStyle}>
+        <h2 style={{ marginBottom: "10px", color: "#333" }}>
+          Reset Your Password
+        </h2>
         <p style={{ color: "#666", marginBottom: "30px" }}>
           Enter your new password for {userEmail}
         </p>
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="password">New Password</label>
+          <div style={{ marginBottom: "20px" }}>
+            <label
+              htmlFor="password"
+              style={{
+                display: "block",
+                marginBottom: "5px",
+                fontWeight: "500",
+                color: "#333",
+              }}
+            >
+              New Password
+            </label>
             <input
               type="password"
               id="password"
@@ -236,14 +288,25 @@ const ResetPassword = () => {
               required
               disabled={loading}
               style={{
+                ...inputStyle,
                 backgroundColor: loading ? "#f0f0f0" : "white",
                 cursor: loading ? "not-allowed" : "text",
               }}
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
+          <div style={{ marginBottom: "20px" }}>
+            <label
+              htmlFor="confirmPassword"
+              style={{
+                display: "block",
+                marginBottom: "5px",
+                fontWeight: "500",
+                color: "#333",
+              }}
+            >
+              Confirm Password
+            </label>
             <input
               type="password"
               id="confirmPassword"
@@ -253,6 +316,7 @@ const ResetPassword = () => {
               required
               disabled={loading}
               style={{
+                ...inputStyle,
                 backgroundColor: loading ? "#f0f0f0" : "white",
                 cursor: loading ? "not-allowed" : "text",
               }}
@@ -291,6 +355,7 @@ const ResetPassword = () => {
             type="submit"
             disabled={loading || !password || !confirmPassword}
             style={{
+              ...buttonStyle,
               opacity: loading || !password || !confirmPassword ? 0.6 : 1,
               cursor:
                 loading || !password || !confirmPassword
