@@ -9,11 +9,27 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const getFromAddress = () => {
+  const emailUser = process.env.EMAIL_USER;
+  if (emailUser) {
+    return `ExamStream <${emailUser}>`;
+  }
+  return process.env.EMAIL_FROM || "noreply@examstream.com";
+};
+
+const getFrontendUrl = () => {
+  return (
+    process.env.FRONTEND_URL ||
+    process.env.PUBLIC_FRONTEND_URL ||
+    "https://exam-stream-controlling-overall-exa.vercel.app"
+  );
+};
+
 // Send signup confirmation email
 const sendSignupConfirmation = async (userEmail, userName, userRole) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      from: getFromAddress(),
       to: userEmail,
       subject: "ExamStream - Account Registration Confirmation",
       html: `
@@ -31,8 +47,10 @@ const sendSignupConfirmation = async (userEmail, userName, userRole) => {
 
     await transporter.sendMail(mailOptions);
     console.log(`Signup confirmation sent to ${userEmail}`);
+    return true;
   } catch (error) {
     console.error("Error sending signup confirmation email:", error);
+    return false;
   }
 };
 
@@ -40,7 +58,7 @@ const sendSignupConfirmation = async (userEmail, userName, userRole) => {
 const sendApprovalEmail = async (userEmail, userName, userRole) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      from: getFromAddress(),
       to: userEmail,
       subject: "ExamStream - Your Account Has Been Approved!",
       html: `
@@ -49,7 +67,7 @@ const sendApprovalEmail = async (userEmail, userName, userRole) => {
           <p>Your ExamStream account has been <strong style="color: #4caf50;">approved</strong> by the admin!</p>
           <p>You can now log in to your account as a <strong>${userRole}</strong>.</p>
           <p>
-            <a href="${process.env.FRONTEND_URL || "http://localhost:3001"}" style="
+            <a href="${getFrontendUrl()}" style="
               display: inline-block;
               background-color: #667eea;
               color: white;
@@ -68,8 +86,10 @@ const sendApprovalEmail = async (userEmail, userName, userRole) => {
 
     await transporter.sendMail(mailOptions);
     console.log(`Approval email sent to ${userEmail}`);
+    return true;
   } catch (error) {
     console.error("Error sending approval email:", error);
+    return false;
   }
 };
 
@@ -77,7 +97,7 @@ const sendApprovalEmail = async (userEmail, userName, userRole) => {
 const sendRejectionEmail = async (userEmail, userName) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      from: getFromAddress(),
       to: userEmail,
       subject: "ExamStream - Account Registration Status",
       html: `
@@ -97,8 +117,10 @@ const sendRejectionEmail = async (userEmail, userName) => {
 
     await transporter.sendMail(mailOptions);
     console.log(`Rejection email sent to ${userEmail}`);
+    return true;
   } catch (error) {
     console.error("Error sending rejection email:", error);
+    return false;
   }
 };
 

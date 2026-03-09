@@ -281,11 +281,14 @@ router.put("/approve-user/:id", protect, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Send approval email
-    await sendApprovalEmail(user.email, user.name, user.role);
+    // Send approval email and expose delivery status to admin UI
+    const emailSent = await sendApprovalEmail(user.email, user.name, user.role);
 
     res.json({
-      message: "User approved successfully and notification sent",
+      message: emailSent
+        ? "User approved successfully and notification sent"
+        : "User approved, but approval email failed to send",
+      emailSent,
       user,
     });
   } catch (error) {
