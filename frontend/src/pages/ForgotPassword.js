@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import api from "../services/api";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -15,20 +16,15 @@ const ForgotPassword = () => {
     setError("");
 
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/auth/forgot-password`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        },
+      const response = await api.post(
+        "/auth/forgot-password",
+        { email },
+        { timeout: 70000 },
       );
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (!response.ok) {
-        setError(data.message || "Failed to process request");
-      } else if (data.emailSent === false) {
+      if (data.emailSent === false) {
         setError(
           "We could not send the reset email right now. Please try again in a minute.",
         );
@@ -38,7 +34,16 @@ const ForgotPassword = () => {
         setEmail("");
       }
     } catch (err) {
-      setError("Network error. Please try again later.");
+      if (err.code === "ECONNABORTED") {
+        setError(
+          "Server is taking too long to respond. If Render is waking up, please try again in 30-60 seconds.",
+        );
+      } else {
+        setError(
+          err.response?.data?.message ||
+            "Network error. Please try again later.",
+        );
+      }
       console.error("Forgot password error:", err);
     } finally {
       setLoading(false);
@@ -151,6 +156,12 @@ const ForgotPassword = () => {
             >
               {loading ? "Sending..." : "Send Reset Link"}
             </button>
+            {loading && (
+              <p style={{ color: "#666", fontSize: "13px", marginTop: "10px" }}>
+                First request may take up to 50-60 seconds if backend is waking
+                up.
+              </p>
+            )}
           </form>
         ) : (
           <div
