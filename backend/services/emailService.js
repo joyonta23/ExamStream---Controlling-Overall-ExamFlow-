@@ -1,26 +1,42 @@
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 
-const RESEND_API_KEY = (process.env.RESEND_API_KEY || "").trim();
-
-// Do not crash app startup if key is missing; email calls will fail gracefully.
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
-
-if (!resend) {
-  console.warn("RESEND_API_KEY is missing. Email sending is disabled.");
-}
-
-const EMAIL_TIMEOUT_MS = Number(process.env.EMAIL_TIMEOUT_MS || 15000);
+const EMAIL_TIMEOUT_MS = Number(process.env.EMAIL_TIMEOUT_MS || 30000);
 let lastEmailError = null;
 
 const getLastEmailError = () => lastEmailError;
 
+// Create Brevo SMTP transporter (works on Render - designed for server sending)
+const createTransporter = () => {
+  const key = (process.env.BREVO_SMTP_KEY || "").trim();
+  const user = (
+    process.env.BREVO_SMTP_USER ||
+    process.env.EMAIL_USER ||
+    ""
+  ).trim();
+  if (!key || !user) {
+    console.warn(
+      "BREVO_SMTP_KEY or BREVO_SMTP_USER missing. Email sending disabled.",
+    );
+    return null;
+  }
+  return nodemailer.createTransport({
+    host: "smtp-relay.brevo.com",
+    port: 587,
+    secure: false,
+    auth: { user, pass: key },
+    connectionTimeout: 15000,
+    socketTimeout: EMAIL_TIMEOUT_MS,
+  });
+};
+
 const sendMailWithTimeout = async (mailOptions, emailType) => {
   lastEmailError = null;
 
-  if (!resend) {
-    lastEmailError = "RESEND_API_KEY_MISSING";
+  const transporter = createTransporter();
+  if (!transporter) {
+    lastEmailError = "BREVO_CREDENTIALS_MISSING";
     console.error(
-      `Error sending ${emailType} email: RESEND_API_KEY is not configured`,
+      `Error sending ${emailType} email: Brevo credentials not configured`,
     );
     return false;
   }
@@ -35,27 +51,7 @@ const sendMailWithTimeout = async (mailOptions, emailType) => {
       }, EMAIL_TIMEOUT_MS);
     });
 
-    // Convert nodemailer format to Resend format
-    const msg = {
-      from: mailOptions.from,
-      to: mailOptions.to,
-      subject: mailOptions.subject,
-      text: mailOptions.text,
-      html: mailOptions.html,
-    };
-
-    const result = await Promise.race([
-      resend.emails.send(msg),
-      timeoutPromise,
-    ]);
-
-    // Resend returns { data, error } for API failures; ensure we treat that as failure.
-    if (result && result.error) {
-      const resendErrorMessage =
-        result.error.message || "Resend API returned an unknown error";
-      throw new Error(resendErrorMessage);
-    }
-
+    await Promise.race([transporter.sendMail(mailOptions), timeoutPromise]);
     clearTimeout(timeoutId);
     return true;
   } catch (error) {
@@ -67,29 +63,12 @@ const sendMailWithTimeout = async (mailOptions, emailType) => {
 };
 
 const getFromAddress = () => {
-  const defaultResendFrom = "ExamStream <onboarding@resend.dev>";
-  const configuredFrom = (
-    process.env.RESEND_FROM ||
+  return (
     process.env.EMAIL_FROM ||
-    ""
+    process.env.BREVO_SMTP_USER ||
+    process.env.EMAIL_USER ||
+    "noreply@examstream.com"
   ).trim();
-
-  if (!configuredFrom) {
-    return defaultResendFrom;
-  }
-
-  const lowerFrom = configuredFrom.toLowerCase();
-  if (
-    lowerFrom.includes("@gmail.com") ||
-    lowerFrom.includes("examstream.com")
-  ) {
-    console.warn(
-      "Configured sender is not Resend-ready; using onboarding@resend.dev instead.",
-    );
-    return defaultResendFrom;
-  }
-
-  return configuredFrom;
 };
 
 const getFrontendUrl = () => {
