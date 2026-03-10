@@ -1,11 +1,24 @@
 const { Resend } = require("resend");
 
-// Initialize Resend with API key
-const resend = new Resend(process.env.RESEND_API_KEY || "");
+const RESEND_API_KEY = (process.env.RESEND_API_KEY || "").trim();
+
+// Do not crash app startup if key is missing; email calls will fail gracefully.
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+
+if (!resend) {
+  console.warn("RESEND_API_KEY is missing. Email sending is disabled.");
+}
 
 const EMAIL_TIMEOUT_MS = Number(process.env.EMAIL_TIMEOUT_MS || 15000);
 
 const sendMailWithTimeout = async (mailOptions, emailType) => {
+  if (!resend) {
+    console.error(
+      `Error sending ${emailType} email: RESEND_API_KEY is not configured`,
+    );
+    return false;
+  }
+
   let timeoutId;
   try {
     const timeoutPromise = new Promise((_, reject) => {
