@@ -67,24 +67,29 @@ const sendMailWithTimeout = async (mailOptions, emailType) => {
 };
 
 const getFromAddress = () => {
-  const configuredFrom = (process.env.EMAIL_FROM || "").trim();
-  if (configuredFrom) {
-    const lowerFrom = configuredFrom.toLowerCase();
+  const defaultResendFrom = "ExamStream <onboarding@resend.dev>";
+  const configuredFrom = (
+    process.env.RESEND_FROM ||
+    process.env.EMAIL_FROM ||
+    ""
+  ).trim();
 
-    if (
-      lowerFrom.includes("@gmail.com") ||
-      lowerFrom.includes("examstream.com")
-    ) {
-      console.warn(
-        "EMAIL_FROM domain is not Resend-ready; falling back to onboarding@resend.dev.",
-      );
-      return "ExamStream <onboarding@resend.dev>";
-    }
-    return configuredFrom;
+  if (!configuredFrom) {
+    return defaultResendFrom;
   }
 
-  // Resend test mode supports onboarding@resend.dev as sender without custom domain.
-  return "ExamStream <onboarding@resend.dev>";
+  const lowerFrom = configuredFrom.toLowerCase();
+  if (
+    lowerFrom.includes("@gmail.com") ||
+    lowerFrom.includes("examstream.com")
+  ) {
+    console.warn(
+      "Configured sender is not Resend-ready; using onboarding@resend.dev instead.",
+    );
+    return defaultResendFrom;
+  }
+
+  return configuredFrom;
 };
 
 const getFrontendUrl = () => {
