@@ -69,9 +69,14 @@ const sendMailWithTimeout = async (mailOptions, emailType) => {
 const getFromAddress = () => {
   const configuredFrom = (process.env.EMAIL_FROM || "").trim();
   if (configuredFrom) {
-    if (configuredFrom.toLowerCase().includes("@gmail.com")) {
+    const lowerFrom = configuredFrom.toLowerCase();
+
+    if (
+      lowerFrom.includes("@gmail.com") ||
+      lowerFrom.includes("examstream.com")
+    ) {
       console.warn(
-        "EMAIL_FROM uses gmail; falling back to onboarding@resend.dev for Resend compatibility.",
+        "EMAIL_FROM domain is not Resend-ready; falling back to onboarding@resend.dev.",
       );
       return "ExamStream <onboarding@resend.dev>";
     }
