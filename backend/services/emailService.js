@@ -38,7 +38,10 @@ const sendMailWithTimeout = async (mailOptions, emailType) => {
       html: mailOptions.html,
     };
 
-    const result = await Promise.race([resend.emails.send(msg), timeoutPromise]);
+    const result = await Promise.race([
+      resend.emails.send(msg),
+      timeoutPromise,
+    ]);
 
     // Resend returns { data, error } for API failures; ensure we treat that as failure.
     if (result && result.error) {
@@ -59,6 +62,12 @@ const sendMailWithTimeout = async (mailOptions, emailType) => {
 const getFromAddress = () => {
   const configuredFrom = (process.env.EMAIL_FROM || "").trim();
   if (configuredFrom) {
+    if (configuredFrom.toLowerCase().includes("@gmail.com")) {
+      console.warn(
+        "EMAIL_FROM uses gmail; falling back to onboarding@resend.dev for Resend compatibility.",
+      );
+      return "ExamStream <onboarding@resend.dev>";
+    }
     return configuredFrom;
   }
 
