@@ -38,7 +38,15 @@ const sendMailWithTimeout = async (mailOptions, emailType) => {
       html: mailOptions.html,
     };
 
-    await Promise.race([resend.emails.send(msg), timeoutPromise]);
+    const result = await Promise.race([resend.emails.send(msg), timeoutPromise]);
+
+    // Resend returns { data, error } for API failures; ensure we treat that as failure.
+    if (result && result.error) {
+      const resendErrorMessage =
+        result.error.message || "Resend API returned an unknown error";
+      throw new Error(resendErrorMessage);
+    }
+
     clearTimeout(timeoutId);
     return true;
   } catch (error) {
@@ -49,11 +57,13 @@ const sendMailWithTimeout = async (mailOptions, emailType) => {
 };
 
 const getFromAddress = () => {
-  const emailUser = process.env.EMAIL_USER;
-  if (emailUser) {
-    return `ExamStream <${emailUser}>`;
+  const configuredFrom = (process.env.EMAIL_FROM || "").trim();
+  if (configuredFrom) {
+    return configuredFrom;
   }
-  return process.env.EMAIL_FROM || "noreply@examstream.com";
+
+  // Resend test mode supports onboarding@resend.dev as sender without custom domain.
+  return "ExamStream <onboarding@resend.dev>";
 };
 
 const getFrontendUrl = () => {
