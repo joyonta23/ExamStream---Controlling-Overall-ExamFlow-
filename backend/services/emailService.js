@@ -1,18 +1,9 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
+
+// Initialize Resend with API key
+const resend = new Resend(process.env.RESEND_API_KEY || "");
 
 const EMAIL_TIMEOUT_MS = Number(process.env.EMAIL_TIMEOUT_MS || 15000);
-
-// Create email transporter
-const transporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || "gmail",
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: EMAIL_TIMEOUT_MS,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
 
 const sendMailWithTimeout = async (mailOptions, emailType) => {
   let timeoutId;
@@ -25,7 +16,16 @@ const sendMailWithTimeout = async (mailOptions, emailType) => {
       }, EMAIL_TIMEOUT_MS);
     });
 
-    await Promise.race([transporter.sendMail(mailOptions), timeoutPromise]);
+    // Convert nodemailer format to Resend format
+    const msg = {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      text: mailOptions.text,
+      html: mailOptions.html,
+    };
+
+    await Promise.race([resend.emails.send(msg), timeoutPromise]);
     clearTimeout(timeoutId);
     return true;
   } catch (error) {

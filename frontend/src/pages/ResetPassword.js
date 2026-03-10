@@ -49,7 +49,8 @@ const ResetPassword = () => {
           );
         } else {
           setError(
-            err.response?.data?.message || "Network error. Please try again later.",
+            err.response?.data?.message ||
+              "Network error. Please try again later.",
           );
         }
         setValidating(false);
@@ -101,7 +102,8 @@ const ResetPassword = () => {
         );
       } else {
         setError(
-          err.response?.data?.message || "Network error. Please try again later.",
+          err.response?.data?.message ||
+            "Network error. Please try again later.",
         );
       }
       console.error("Password reset error:", err);
