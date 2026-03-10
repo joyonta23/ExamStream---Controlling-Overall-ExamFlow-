@@ -1,13 +1,39 @@
 const nodemailer = require("nodemailer");
 
+const EMAIL_TIMEOUT_MS = Number(process.env.EMAIL_TIMEOUT_MS || 15000);
+
 // Create email transporter
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE || "gmail",
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: EMAIL_TIMEOUT_MS,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
   },
 });
+
+const sendMailWithTimeout = async (mailOptions, emailType) => {
+  let timeoutId;
+  try {
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(
+          new Error(`${emailType} email timed out after ${EMAIL_TIMEOUT_MS}ms`),
+        );
+      }, EMAIL_TIMEOUT_MS);
+    });
+
+    await Promise.race([transporter.sendMail(mailOptions), timeoutPromise]);
+    clearTimeout(timeoutId);
+    return true;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    console.error(`Error sending ${emailType} email:`, error.message || error);
+    return false;
+  }
+};
 
 const getFromAddress = () => {
   const emailUser = process.env.EMAIL_USER;
@@ -27,12 +53,11 @@ const getFrontendUrl = () => {
 
 // Send signup confirmation email
 const sendSignupConfirmation = async (userEmail, userName, userRole) => {
-  try {
-    const mailOptions = {
-      from: getFromAddress(),
-      to: userEmail,
-      subject: "ExamStream - Account Registration Confirmation",
-      html: `
+  const mailOptions = {
+    from: getFromAddress(),
+    to: userEmail,
+    subject: "ExamStream - Account Registration Confirmation",
+    html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #667eea;">Welcome to ExamStream, ${userName}!</h2>
           <p>Thank you for registering as a <strong>${userRole}</strong> on ExamStream.</p>
@@ -43,25 +68,22 @@ const sendSignupConfirmation = async (userEmail, userName, userRole) => {
           <p style="color: #666; font-size: 12px;">© 2026 ExamStream. All rights reserved.</p>
         </div>
       `,
-    };
+  };
 
-    await transporter.sendMail(mailOptions);
+  const sent = await sendMailWithTimeout(mailOptions, "signup confirmation");
+  if (sent) {
     console.log(`Signup confirmation sent to ${userEmail}`);
-    return true;
-  } catch (error) {
-    console.error("Error sending signup confirmation email:", error);
-    return false;
   }
+  return sent;
 };
 
 // Send approval email
 const sendApprovalEmail = async (userEmail, userName, userRole) => {
-  try {
-    const mailOptions = {
-      from: getFromAddress(),
-      to: userEmail,
-      subject: "ExamStream - Your Account Has Been Approved!",
-      html: `
+  const mailOptions = {
+    from: getFromAddress(),
+    to: userEmail,
+    subject: "ExamStream - Your Account Has Been Approved!",
+    html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #667eea;">Great News, ${userName}!</h2>
           <p>Your ExamStream account has been <strong style="color: #4caf50;">approved</strong> by the admin!</p>
@@ -82,25 +104,22 @@ const sendApprovalEmail = async (userEmail, userName, userRole) => {
           <p style="color: #666; font-size: 12px;">© 2026 ExamStream. All rights reserved.</p>
         </div>
       `,
-    };
+  };
 
-    await transporter.sendMail(mailOptions);
+  const sent = await sendMailWithTimeout(mailOptions, "approval");
+  if (sent) {
     console.log(`Approval email sent to ${userEmail}`);
-    return true;
-  } catch (error) {
-    console.error("Error sending approval email:", error);
-    return false;
   }
+  return sent;
 };
 
 // Send rejection email
 const sendRejectionEmail = async (userEmail, userName) => {
-  try {
-    const mailOptions = {
-      from: getFromAddress(),
-      to: userEmail,
-      subject: "ExamStream - Account Registration Status",
-      html: `
+  const mailOptions = {
+    from: getFromAddress(),
+    to: userEmail,
+    subject: "ExamStream - Account Registration Status",
+    html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #667eea;">ExamStream Account Update</h2>
           <p>Hello ${userName},</p>
@@ -113,25 +132,22 @@ const sendRejectionEmail = async (userEmail, userName) => {
           <p style="color: #666; font-size: 12px;">© 2026 ExamStream. All rights reserved.</p>
         </div>
       `,
-    };
+  };
 
-    await transporter.sendMail(mailOptions);
+  const sent = await sendMailWithTimeout(mailOptions, "rejection");
+  if (sent) {
     console.log(`Rejection email sent to ${userEmail}`);
-    return true;
-  } catch (error) {
-    console.error("Error sending rejection email:", error);
-    return false;
   }
+  return sent;
 };
 
 // Send password reset email
 const sendPasswordResetEmail = async (userEmail, userName, resetLink) => {
-  try {
-    const mailOptions = {
-      from: getFromAddress(),
-      to: userEmail,
-      subject: "ExamStream - Password Reset Request",
-      html: `
+  const mailOptions = {
+    from: getFromAddress(),
+    to: userEmail,
+    subject: "ExamStream - Password Reset Request",
+    html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #667eea;">Password Reset Request</h2>
           <p>Hello ${userName},</p>
@@ -162,15 +178,13 @@ const sendPasswordResetEmail = async (userEmail, userName, resetLink) => {
           <p style="color: #666; font-size: 12px;">© 2026 ExamStream. All rights reserved.</p>
         </div>
       `,
-    };
+  };
 
-    await transporter.sendMail(mailOptions);
+  const sent = await sendMailWithTimeout(mailOptions, "password reset");
+  if (sent) {
     console.log(`Password reset email sent to ${userEmail}`);
-    return true;
-  } catch (error) {
-    console.error("Error sending password reset email:", error);
-    return false;
   }
+  return sent;
 };
 
 module.exports = {
