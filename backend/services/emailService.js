@@ -10,9 +10,15 @@ if (!resend) {
 }
 
 const EMAIL_TIMEOUT_MS = Number(process.env.EMAIL_TIMEOUT_MS || 15000);
+let lastEmailError = null;
+
+const getLastEmailError = () => lastEmailError;
 
 const sendMailWithTimeout = async (mailOptions, emailType) => {
+  lastEmailError = null;
+
   if (!resend) {
+    lastEmailError = "RESEND_API_KEY_MISSING";
     console.error(
       `Error sending ${emailType} email: RESEND_API_KEY is not configured`,
     );
@@ -54,7 +60,8 @@ const sendMailWithTimeout = async (mailOptions, emailType) => {
     return true;
   } catch (error) {
     clearTimeout(timeoutId);
-    console.error(`Error sending ${emailType} email:`, error.message || error);
+    lastEmailError = (error && error.message) || "UNKNOWN_EMAIL_ERROR";
+    console.error(`Error sending ${emailType} email:`, lastEmailError);
     return false;
   }
 };
@@ -224,4 +231,5 @@ module.exports = {
   sendApprovalEmail,
   sendRejectionEmail,
   sendPasswordResetEmail,
+  getLastEmailError,
 };

@@ -10,6 +10,7 @@ const {
   sendApprovalEmail,
   sendRejectionEmail,
   sendPasswordResetEmail,
+  getLastEmailError,
 } = require("../services/emailService");
 
 // Generate JWT token
@@ -396,6 +397,7 @@ router.post(
         message:
           "If an account exists with this email, a password reset link has been sent.",
         emailSent,
+        emailError: emailSent ? null : getLastEmailError(),
       });
     } catch (error) {
       console.error(error);
