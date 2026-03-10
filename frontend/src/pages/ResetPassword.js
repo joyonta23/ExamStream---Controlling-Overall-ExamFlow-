@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import api from "../services/api";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -25,18 +26,15 @@ const ResetPassword = () => {
       }
 
       try {
-        const response = await fetch(
-          `${process.env.REACT_APP_API_URL}/auth/validate-reset-token`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token }),
-          },
+        const response = await api.post(
+          "/auth/validate-reset-token",
+          { token },
+          { timeout: 70000 },
         );
 
-        const data = await response.json();
+        const data = response.data;
 
-        if (response.ok && data.valid) {
+        if (data.valid) {
           setTokenValid(true);
           setUserEmail(data.email);
           setValidating(false);
@@ -45,7 +43,15 @@ const ResetPassword = () => {
           setValidating(false);
         }
       } catch (err) {
-        setError("Network error. Please try again later.");
+        if (err.code === "ECONNABORTED") {
+          setError(
+            "Server is taking too long to respond. If backend is waking up, please try again in 30-60 seconds.",
+          );
+        } else {
+          setError(
+            err.response?.data?.message || "Network error. Please try again later.",
+          );
+        }
         setValidating(false);
         console.error("Token validation error:", err);
       }
@@ -72,19 +78,16 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/auth/reset-password`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, password }),
-        },
+      const response = await api.post(
+        "/auth/reset-password",
+        { token, password },
+        { timeout: 70000 },
       );
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (!response.ok) {
-        setError(data.message || "Failed to reset password");
+      if (!data?.message) {
+        setError("Failed to reset password");
       } else {
         setMessage(data.message);
         setResetSuccess(true);
@@ -92,7 +95,15 @@ const ResetPassword = () => {
         setConfirmPassword("");
       }
     } catch (err) {
-      setError("Network error. Please try again later.");
+      if (err.code === "ECONNABORTED") {
+        setError(
+          "Server is taking too long to respond. If backend is waking up, please try again in 30-60 seconds.",
+        );
+      } else {
+        setError(
+          err.response?.data?.message || "Network error. Please try again later.",
+        );
+      }
       console.error("Password reset error:", err);
     } finally {
       setLoading(false);
