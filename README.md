@@ -16,11 +16,10 @@ Through this project, I strengthened practical skills in React, Node.js, Express
 - Student dashboard to join exams, upload answers, and submit on time
 - Timer-based flow for start time, duration, and upload deadline
 - Cloud file handling through Cloudinary and optional Google Drive integration
+- Automated transactional emails using Brevo (signup and account status)
 - Role-based authentication with JWT
 
 ## Screenshots
-
-Add your screenshots inside the `screenshots` folder, then keep these file names for automatic display in this README.
 
 ```text
 screenshots/home-page.png
@@ -43,7 +42,8 @@ screenshots/take-exam2.png
 - Frontend: React, React Router, Axios
 - Backend: Node.js, Express
 - Database: MongoDB Atlas
-- Storage: Cloudinary, Google Drive (optional)
+- Storage: Cloudinary
+- Email: Brevo (API and SMTP fallback)
 - Auth: JWT
 
 ## Quick Start
@@ -68,9 +68,23 @@ CLOUDINARY_CLOUD_NAME=your_cloudinary_name
 CLOUDINARY_API_KEY=your_cloudinary_key
 CLOUDINARY_API_SECRET=your_cloudinary_secret
 
+# Brevo email (recommended: configure API and SMTP)
+BREVO_API_KEY=your_brevo_api_key
+BREVO_SMTP_USER=your_brevo_login_email
+BREVO_SMTP_KEY=your_brevo_smtp_key
+EMAIL_FROM=your_verified_sender_email
+EMAIL_TIMEOUT_MS=30000
+
 # Frontend API URL (optional for local)
 FRONTEND_URL=http://localhost:3000
 ```
+
+## Email Configuration (Brevo)
+
+- The backend first tries Brevo API if BREVO_API_KEY is configured.
+- If API key is missing, it falls back to Brevo SMTP using BREVO_SMTP_USER and BREVO_SMTP_KEY.
+- For production hosting, API mode is more reliable when SMTP ports are restricted.
+- If no Brevo credentials are provided, email features remain disabled.
 
 ### 3. Run the app
 
@@ -87,20 +101,17 @@ npm run dev
 
 1. Push code to GitHub.
 2. Create a new Render Web Service.
-3. Connect your repository.
+3. Connect with repository.
 4. Add backend environment variables.
 5. Deploy.
 
-### Frontend (Vercel or Netlify)
+### Frontend (Vercel)
 
 1. Import the same repository.
 2. Use build command: `cd frontend && npm install && npm run build`
 3. Use publish directory: `frontend/build`
 4. Add `REACT_APP_API_URL` with your deployed backend URL.
 5. Deploy.
-
-## Default Demo Accounts
-
 
 ## Project Structure
 
