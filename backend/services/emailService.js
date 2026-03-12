@@ -146,18 +146,21 @@ const getFromAddress = () => {
   ).trim();
   const configuredFrom = (process.env.EMAIL_FROM || "").trim();
 
-  if (configuredFrom) {
-    // Avoid unverified placeholder sender domains that Brevo rejects.
-    if (/\@examstream\.com$/i.test(configuredFrom) && brevoUser) {
+  // Brevo account sender is the safest default; use it whenever available.
+  if (brevoUser) {
+    if (configuredFrom && configuredFrom !== brevoUser) {
       console.warn(
-        `EMAIL_FROM (${configuredFrom}) is not valid for Brevo; using ${brevoUser} instead.`,
+        `EMAIL_FROM (${configuredFrom}) overridden by BREVO_SMTP_USER (${brevoUser}) to avoid sender rejection.`,
       );
-      return brevoUser;
     }
+    return brevoUser;
+  }
+
+  if (configuredFrom) {
     return configuredFrom;
   }
 
-  return brevoUser || "noreply@examstream.com";
+  return "noreply@examstream.com";
 };
 
 const getFrontendUrl = () => {
