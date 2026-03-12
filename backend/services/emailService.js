@@ -65,7 +65,10 @@ const sendViaBrevoApiWithTimeout = async (mailOptions, emailType) => {
       lastEmailError = (error && error.message) || "BREVO_API_SEND_FAILED";
     }
 
-    console.error(`Error sending ${emailType} email via Brevo API:`, lastEmailError);
+    console.error(
+      `Error sending ${emailType} email via Brevo API:`,
+      lastEmailError,
+    );
     return { attempted: true, sent: false };
   }
 };
@@ -136,12 +139,25 @@ const sendMailWithTimeout = async (mailOptions, emailType) => {
 };
 
 const getFromAddress = () => {
-  return (
-    process.env.EMAIL_FROM ||
+  const brevoUser = (
     process.env.BREVO_SMTP_USER ||
     process.env.EMAIL_USER ||
-    "noreply@examstream.com"
+    ""
   ).trim();
+  const configuredFrom = (process.env.EMAIL_FROM || "").trim();
+
+  if (configuredFrom) {
+    // Avoid unverified placeholder sender domains that Brevo rejects.
+    if (/\@examstream\.com$/i.test(configuredFrom) && brevoUser) {
+      console.warn(
+        `EMAIL_FROM (${configuredFrom}) is not valid for Brevo; using ${brevoUser} instead.`,
+      );
+      return brevoUser;
+    }
+    return configuredFrom;
+  }
+
+  return brevoUser || "noreply@examstream.com";
 };
 
 const getFrontendUrl = () => {
