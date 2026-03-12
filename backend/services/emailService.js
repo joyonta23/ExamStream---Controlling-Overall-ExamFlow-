@@ -1,9 +1,74 @@
 const nodemailer = require("nodemailer");
 
 const EMAIL_TIMEOUT_MS = Number(process.env.EMAIL_TIMEOUT_MS || 30000);
+const BREVO_API_KEY = (process.env.BREVO_API_KEY || "").trim();
 let lastEmailError = null;
 
 const getLastEmailError = () => lastEmailError;
+
+const parseFromAddress = (fromAddress) => {
+  const value = (fromAddress || "").trim();
+  const match = value.match(/^(.*)<(.+)>$/);
+
+  if (match) {
+    const name = match[1].trim().replace(/^"|"$/g, "");
+    const email = match[2].trim();
+    return {
+      email,
+      name: name || undefined,
+    };
+  }
+
+  return { email: value };
+};
+
+const sendViaBrevoApiWithTimeout = async (mailOptions, emailType) => {
+  if (!BREVO_API_KEY) {
+    return { attempted: false, sent: false };
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), EMAIL_TIMEOUT_MS);
+
+  try {
+    const sender = parseFromAddress(mailOptions.from);
+
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": BREVO_API_KEY,
+      },
+      body: JSON.stringify({
+        sender,
+        to: [{ email: mailOptions.to }],
+        subject: mailOptions.subject,
+        htmlContent: mailOptions.html,
+        textContent: mailOptions.text,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(errorBody || `Brevo API error: HTTP ${response.status}`);
+    }
+
+    return { attempted: true, sent: true };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error && error.name === "AbortError") {
+      lastEmailError = `${emailType} email timed out after ${EMAIL_TIMEOUT_MS}ms`;
+    } else {
+      lastEmailError = (error && error.message) || "BREVO_API_SEND_FAILED";
+    }
+
+    console.error(`Error sending ${emailType} email via Brevo API:`, lastEmailError);
+    return { attempted: true, sent: false };
+  }
+};
 
 // Create Brevo SMTP transporter (works on Render - designed for server sending)
 const createTransporter = () => {
@@ -32,9 +97,17 @@ const createTransporter = () => {
 const sendMailWithTimeout = async (mailOptions, emailType) => {
   lastEmailError = null;
 
+  // Prefer HTTPS API (port 443) in hosted environments where SMTP ports are blocked.
+  const apiResult = await sendViaBrevoApiWithTimeout(mailOptions, emailType);
+  if (apiResult.attempted) {
+    return apiResult.sent;
+  }
+
   const transporter = createTransporter();
   if (!transporter) {
-    lastEmailError = "BREVO_CREDENTIALS_MISSING";
+    lastEmailError = BREVO_API_KEY
+      ? "BREVO_SMTP_CREDENTIALS_MISSING"
+      : "BREVO_CREDENTIALS_MISSING";
     console.error(
       `Error sending ${emailType} email: Brevo credentials not configured`,
     );
